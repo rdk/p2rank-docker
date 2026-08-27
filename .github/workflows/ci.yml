@@ -60,7 +60,7 @@ jobs:
           tags: p2rank:scan
           cache-from: type=gha
       - name: Scan for vulnerabilities
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: p2rank:scan
           format: sarif
