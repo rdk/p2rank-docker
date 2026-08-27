@@ -58,8 +58,9 @@ jobs:
           load: true
           tags: p2rank:scan
           cache-from: type=gha
-      # Fails only on vulnerabilities that actually have a fix available,
-      # so a red build always means "rebuild or bump the base", never noise.
+      # Fails only on fixable HIGH/CRITICAL findings, minus the ones recorded
+      # in .trivyignore that live inside the upstream P2Rank bundle. So a red
+      # build always means something new and actionable appeared.
       - name: Scan for vulnerabilities
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -67,4 +68,5 @@ jobs:
           format: table
           severity: HIGH,CRITICAL
           ignore-unfixed: true
+          trivyignores: .trivyignore
           exit-code: "1"
