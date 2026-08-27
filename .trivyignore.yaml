@@ -1,0 +1,22 @@
+# Vulnerabilities in libraries bundled inside the P2Rank release itself.
+# Packaging only unpacks the upstream tarball, so they cannot be fixed here;
+# the dependency bump has to happen in rdk/p2rank. They are recorded rather
+# than left to redden every build — anything new still fails CI.
+#
+# expired_at forces a re-review instead of letting these rot silently.
+vulnerabilities:
+  - id: CVE-2025-52999
+    statement: jackson-core 2.13.4 bundled by P2Rank; fixed in 2.15.0.
+    expired_at: 2027-01-01
+  - id: GHSA-r7wm-3cxj-wff9
+    statement: jackson-core 2.13.4 bundled by P2Rank; fixed in 2.18.8.
+    expired_at: 2027-01-01
+  - id: CVE-2026-54512
+    statement: jackson-databind 2.13.4.2 bundled by P2Rank; fixed in 2.18.8.
+    expired_at: 2027-01-01
+  - id: CVE-2026-54513
+    statement: jackson-databind 2.13.4.2 bundled by P2Rank; fixed in 2.18.8.
+    expired_at: 2027-01-01
+  - id: CVE-2026-21452
+    statement: msgpack-core 0.8.24 bundled by P2Rank; fixed in 0.9.11.
+    expired_at: 2027-01-01
