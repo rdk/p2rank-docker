@@ -155,6 +155,25 @@ CI runs them on every push, and weekly, so base-image drift shows up as a red bu
 
 **Checksum-pinned release.** The download is verified against a recorded SHA-256, so a rebuild either produces the same P2Rank or fails loudly.
 
+## Troubleshooting
+
+**`Permission denied` writing into the mounted directory.** The image runs as
+uid 1000. If your host uid is different, the container cannot write your
+directory — pass your own ids, as every example above does:
+
+```bash
+docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/data" ghcr.io/rdk/p2rank ...
+```
+
+**`Could not download ... ligands/download/XXX.cif`.** BioJava tries to fetch
+chemical component definitions. These messages are harmless — predictions are
+identical with the network disabled — and the image pre-creates a writable
+cache so they should not appear at all. Seeing them means `/tmp` is read-only
+or overmounted.
+
+**Out of memory on a large structure.** Give the container more memory
+(`-m 16g`) or set the heap directly (`-e JAVA_OPTS="-Xmx12g"`).
+
 ## License and citation
 
 This packaging is MIT licensed, as is P2Rank itself. If you use P2Rank in published work, please cite it — see [`CITATION.cff`](CITATION.cff) and the [upstream citation list](https://github.com/rdk/p2rank/blob/master/misc/citations.md).

@@ -88,7 +88,9 @@ errors="$(docker run --rm -u 1234:1234 "$IMAGE" bash -lc \
 assert_eq "no chem-comp cache errors as non-root" "$errors" "0"
 
 # --- bind mounts round-trip correctly --------------------------------------
-cp_out="$(docker run --rm -v "$workdir:/data" "$IMAGE" bash -lc \
+# Uses --user, as the README instructs: the image defaults to uid 1000, which
+# cannot write a host directory owned by any other uid.
+cp_out="$(docker run --rm -u "$(id -u):$(id -g)" -v "$workdir:/data" "$IMAGE" bash -lc \
     'cp /opt/p2rank/test_data/2W83.pdb /data/ && prank predict -f /data/2W83.pdb -o /data/out 2>&1 | tail -1')"
 assert_contains "predicts into a bind mount" "$cp_out" "Finished successfully"
 
