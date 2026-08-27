@@ -1,0 +1,52 @@
+name: Check for new P2Rank release
+
+# P2Rank releases are the only thing this repo tracks, so watch for them and
+# open an issue rather than letting the image quietly fall behind.
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: versions
+        run: |
+          pinned=$(grep -oP '^ARG P2RANK_VERSION=\K.*' Dockerfile)
+          latest=$(gh api /repos/rdk/p2rank/releases/latest --jq .tag_name)
+          echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "Pinned $pinned, latest upstream $latest"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - if: steps.versions.outputs.pinned != steps.versions.outputs.latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PINNED: ${{ steps.versions.outputs.pinned }}
+          LATEST: ${{ steps.versions.outputs.latest }}
+        run: |
+          title="Update P2Rank to $LATEST"
+          if gh issue list --state open --search "$title in:title" | grep -q .; then
+            echo "Issue already open."; exit 0
+          fi
+          sha=$(curl -fsSL "https://github.com/rdk/p2rank/releases/download/$LATEST/p2rank_$LATEST.tar.gz" | sha256sum | cut -d' ' -f1)
+          gh issue create --title "$title" --body "$(cat <<EOF
+          The image pins P2Rank \`$PINNED\`; upstream latest is \`$LATEST\`.
+
+          To update, in \`Dockerfile\`:
+
+          \`\`\`
+          ARG P2RANK_VERSION=$LATEST
+          ARG P2RANK_SHA256=$sha
+          \`\`\`
+
+          Then bump \`EXPECTED_VERSION\` in CI if it is pinned, and tag a release.
+          EOF
+          )"

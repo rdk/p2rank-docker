@@ -1,0 +1,4 @@
+# local test output
+/out/
+/tmp/
+*.log

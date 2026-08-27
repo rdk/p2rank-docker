@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+title: P2Rank Docker image
+message: >-
+  If you use P2Rank in published work, please cite the software
+  article listed under preferred-citation.
+type: software
+abstract: >-
+  Container image packaging P2Rank, a machine learning based tool for
+  rapid and accurate prediction of ligand binding sites from protein
+  structure.
+url: "https://github.com/rdk/p2rank"
+license: MIT
+authors:
+  - family-names: Krivák
+    given-names: Radoslav
+  - family-names: Hoksza
+    given-names: David
+preferred-citation:
+  type: article
+  title: >-
+    P2Rank: machine learning based tool for rapid and accurate
+    prediction of ligand binding sites from protein structure
+  authors:
+    - family-names: Krivák
+      given-names: Radoslav
+    - family-names: Hoksza
+      given-names: David
+  journal: Journal of Cheminformatics
+  volume: 10
+  issue: 1
+  year: 2018
+  doi: 10.1186/s13321-018-0285-8
