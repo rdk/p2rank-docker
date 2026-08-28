@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Rebuild weekly: the base image moves even when this repo does not, so
+  # breakage shows up as a red build rather than at release time.
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # v3.1.0 bundles hadolint 2.12, which cannot parse `ADD --checksum`.
+      # v3.5.0 bundles 2.15.1, which also no longer needs the DL3006
+      # exception the config file used to carry.
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.5.0
+        with:
+          dockerfile: Dockerfile
+      - name: Lint shell scripts
+        run: shellcheck tests/run-tests.sh
+
+  test:
+    uses: ./.github/workflows/build-test.yml
