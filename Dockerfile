@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 
-# P2Rank — ligand binding site prediction from protein structure.
+# P2Rank: ligand binding site prediction from protein structure.
 # Upstream: https://github.com/rdk/p2rank
 
 ARG P2RANK_VERSION=2.5.1
 ARG JAVA_IMAGE=eclipse-temurin:25-jre-noble
 
 # ---------------------------------------------------------------------------
-# Fetch stage. Keeps curl and the 275 MB tarball out of the runtime image.
+# Fetch stage. Keeps the 275 MB tarball out of the runtime image.
 # ---------------------------------------------------------------------------
 FROM alpine:3.24 AS fetch
 
@@ -17,8 +17,8 @@ ARG P2RANK_VERSION
 ARG P2RANK_SHA256=d243f2d9036ac053fefb9407b5fe1c85f4fe077c519fd975ac585e995feab274
 
 # BuildKit verifies the checksum before the layer is created, so a tampered or
-# truncated download fails the build instead of being unpacked. Alpine's busybox
-# tar does the extraction, so this stage installs nothing at all.
+# truncated download fails the build instead of being unpacked. Extraction uses
+# Alpine's busybox tar, so this stage installs no packages.
 ADD --checksum=sha256:${P2RANK_SHA256} \
     https://github.com/rdk/p2rank/releases/download/${P2RANK_VERSION}/p2rank_${P2RANK_VERSION}.tar.gz \
     /tmp/p2rank.tar.gz
@@ -51,11 +51,10 @@ COPY --from=fetch /opt/p2rank /opt/p2rank
 ENV PATH="/opt/p2rank:${PATH}"
 
 # The launcher hardcodes `-Xmx2048m` and appends it *after* $JAVA_OPTS, and the
-# last -Xmx wins — so out of the box the heap is stuck at 2 GB no matter what
-# the caller sets. Swapping in MaxRAMPercentage fixes both problems at once:
-# the heap follows the container's memory limit, and because the JVM ignores
-# MaxRAMPercentage whenever an explicit -Xmx is present, `JAVA_OPTS=-Xmx8g`
-# now works as users expect.
+# last -Xmx wins, so out of the box the heap is stuck at 2 GB whatever the
+# caller sets. MaxRAMPercentage addresses both: the heap follows the
+# container's memory limit, and because the JVM ignores MaxRAMPercentage
+# whenever an explicit -Xmx is present, `JAVA_OPTS=-Xmx8g` takes effect again.
 RUN sed -i "s|-Xmx2048m|${P2RANK_HEAP}|" /opt/p2rank/prank
 
 # BioJava caches chemical component definitions here. Pre-create it world

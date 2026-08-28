@@ -1,7 +1,7 @@
 # Vulnerabilities in libraries bundled inside the P2Rank release itself.
 # Packaging only unpacks the upstream tarball, so they cannot be fixed here;
 # the dependency bump has to happen in rdk/p2rank. They are recorded rather
-# than left to redden every build — anything new still fails CI.
+# than left to redden every build. Anything new still fails CI.
 #
 # expired_at forces a re-review instead of letting these rot silently.
 vulnerabilities:

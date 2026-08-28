@@ -3,7 +3,7 @@ name: Build and test
 # The behavioural suite, factored out so both CI and the release path run the
 # same thing. Without this the release path had no test gate at all: ci.yml
 # triggers on `push: branches: [main]` and `pull_request`, and a tag push
-# matches neither — so tagging published an image the suite had never seen.
+# matches neither, so tagging published an image the suite had never seen.
 on:
   workflow_call:
 

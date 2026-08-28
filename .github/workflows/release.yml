@@ -65,9 +65,9 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          # A dry run exercises the whole path — the version step, the tag
+          # A dry run exercises the whole path (the version step, the tag
           # computation, the emulated arm64 build and its in-image smoke
-          # prediction — without publishing anything irreversible.
+          # prediction) without publishing anything irreversible.
           push: ${{ !inputs.dry_run }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

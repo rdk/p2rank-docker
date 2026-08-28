@@ -7,6 +7,8 @@
 # Every test runs the real image the way a user or a workflow engine would.
 # No dependencies beyond bash, docker and coreutils.
 
+# No -e: each check records a pass or a failure and the suite reports a total,
+# so one failing assertion must not abort the run.
 set -uo pipefail
 
 IMAGE="${IMAGE:-p2rank:local}"

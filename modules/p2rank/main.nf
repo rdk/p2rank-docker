@@ -1,4 +1,4 @@
-// P2Rank — predict ligand binding sites for a channel of structures.
+// P2Rank: predict ligand binding sites for a channel of structures.
 //
 // Include it as:
 //

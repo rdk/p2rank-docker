@@ -1,6 +1,6 @@
 # P2Rank in Docker
 
-Ready-to-run container image for [**P2Rank**](https://github.com/rdk/p2rank) — machine learning based prediction of ligand binding sites from protein structure.
+Ready-to-run container image for [**P2Rank**](https://github.com/rdk/p2rank): machine learning based prediction of ligand binding sites from protein structure.
 
 No Java to install, no classpath to configure, no model files to download. One command, and you get pockets.
 
@@ -9,7 +9,7 @@ docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/data" ghcr.io/rdk/p2rank \
     prank predict -f /data/1fbl.pdb -o /data/output
 ```
 
-That writes `output/1fbl.pdb_predictions.csv` — one row per predicted pocket, ranked — next to your input file, owned by you.
+That writes `output/1fbl.pdb_predictions.csv` next to your input file, owned by you. Each row is one predicted pocket, ranked.
 
 ## What's inside
 
@@ -97,78 +97,25 @@ process predict_pockets {
 #### A batching module
 
 One task per structure pays the JVM startup cost every time. Because `prank`
-takes a dataset file, a batch of structures can share a single JVM — collate the
-channel, write the paths to a `.ds`, and let P2Rank thread across them. The
-module below predicts in batches and merges the per-structure CSVs into one
-table with a `structure` column. It ships in this repo as
-[`modules/p2rank/main.nf`](modules/p2rank/main.nf) — copy it, or include it
-directly:
+takes a dataset file, a batch of structures can share a single JVM: collate the
+channel, write the paths to a `.ds`, and let P2Rank thread across them.
+
+This repo ships such a module as
+[`modules/p2rank/main.nf`](modules/p2rank/main.nf). It predicts in batches and
+merges the per-structure CSVs into one table with a `structure` column, since
+P2Rank records the structure name only in the output filename. Copy it into
+your pipeline, or include it directly:
 
 ```groovy
-// modules/p2rank/main.nf
+include { P2RANK } from './modules/p2rank/main.nf'
 
-process RUN_P2RANK {
-
-    label 'p2rank'
-    errorStrategy 'ignore'
-
-    input:
-    path structures
-
-    output:
-    path "out/*_predictions.csv", emit: predictions
-    path "out/*_residues.csv",    emit: residues
-
-    script:
-    """
-    printf '%s\\n' ${structures} > batch.ds
-
-    prank predict batch.ds \\
-        -o out \\
-        -c ${params.p2rank_config} \\
-        -threads ${task.cpus}
-    """
-}
-
-process MERGE_P2RANK {
-
-    label 'p2rank'
-    publishDir params.outdir, mode: 'copy', overwrite: true
-
-    input:
-    path csvs
-
-    output:
-    path 'pockets.csv'
-
-    script:
-    """
-    # The image ships a JRE, not Python: keep the merge to awk.
-    awk 'FNR==1 {
-             structure = FILENAME
-             sub(/_predictions\\.csv\$/, "", structure)
-             if (!header++) { print "structure," \$0 }
-             next
-         }
-         NF { print structure "," \$0 }' *_predictions.csv \\
-      | sed 's/ *, */,/g' > pockets.csv
-    """
-}
-
-workflow P2RANK {
-    take:
-    structure_ch // expects: path(mmCIF/PDB file)
-
-    main:
-    RUN_P2RANK(structure_ch.collate(params.p2rank_batch_size.toInteger()))
-    MERGE_P2RANK(RUN_P2RANK.out.predictions.collect())
-
-    emit:
-    MERGE_P2RANK.out
+workflow {
+    // e.g. --structures 'data/*.cif'
+    P2RANK(Channel.fromPath(params.structures, checkIfExists: true))
 }
 ```
 
-With the matching configuration:
+It needs a container and two params:
 
 ```groovy
 // nextflow.config
@@ -190,15 +137,7 @@ process {
 docker.enabled = true
 ```
 
-Called as `P2RANK(structure_ch)`, it writes one `pockets.csv` for the run:
-
-```groovy
-include { P2RANK } from './modules/p2rank/main.nf'
-
-workflow {
-    P2RANK(Channel.fromPath(params.list).map { file(it) })
-}
-```
+The result is one `pockets.csv` for the run.
 
 A few things worth knowing when wiring this up:
 
@@ -209,13 +148,13 @@ A few things worth knowing when wiring this up:
   unlike tools that pull weights at runtime this needs no `containerOptions` and
   runs on air-gapped nodes.
 - **The image has a JRE, not Python.** Post-processing inside these tasks has to
-  be shell, awk or Java — or run in another container.
+  be shell, awk or Java, or run in another container.
 - **Batch size bounds the damage.** A structure P2Rank rejects fails its whole
   batch, so smaller batches lose less work; `errorStrategy 'ignore'` keeps one
   bad batch from killing the run.
 - **Pick the model per input.** Predicted structures want `-c alphafold`, which
-  reads pLDDT from the B-factor column — split the channel by provenance if a
-  run mixes experimental and predicted structures.
+  reads pLDDT from the B-factor column. Split the channel by provenance if a run
+  mixes experimental and predicted structures.
 
 ### Singularity / Apptainer on HPC
 
@@ -224,17 +163,17 @@ apptainer exec docker://ghcr.io/rdk/p2rank:2.5.1 \
     prank predict -f protein.pdb -o output
 ```
 
-The image needs no network at runtime — predictions on an air-gapped node are byte-identical to online ones, and the test suite checks that.
+The image needs no network at runtime. Predictions on an air-gapped node are byte-identical to online ones, and the test suite checks that.
 
 ## Tags
 
 | Tag | Means |
 |---|---|
-| `2.5.1` | the packaged P2Rank release — **use this in pipelines** |
+| `2.5.1` | the packaged P2Rank release; **use this in pipelines** |
 | `latest` | newest release, moves without warning |
 
 `2.5.1` is rebuilt when the base image picks up security updates, so it moves
-too — it always means P2Rank 2.5.1, not one exact build. Pin the digest where a
+too: it always means P2Rank 2.5.1, not one exact build. Pin the digest where a
 run has to be byte-identical:
 
 ```bash
@@ -258,11 +197,11 @@ Build arguments:
 | `JAVA_IMAGE` | `eclipse-temurin:25-jre-noble` | the JRE to run on |
 | `P2RANK_HEAP` | `-XX:MaxRAMPercentage=75.0` | default heap policy |
 
-The build downloads P2Rank from its GitHub release and verifies the SHA-256 before unpacking. The build context is empty by design — nothing from your working directory ends up in the image.
+The build downloads P2Rank from its GitHub release and verifies the SHA-256 before unpacking. The build context is empty by design, so nothing from your working directory ends up in the image.
 
 ## Tests
 
-`tests/run-tests.sh` exercises the built image the way users and workflow engines actually invoke it — not just "does the binary exist":
+`tests/run-tests.sh` exercises the built image the way users and workflow engines actually invoke it, rather than only checking that the binary exists:
 
 - predicts real pockets on bundled structures, with a sanity check on the top score
 - runs as root, as uid 1000, and as an arbitrary uid a scheduler might pass
@@ -290,15 +229,15 @@ CI runs them on every push, and weekly, so base-image drift shows up as a red bu
 
 **`Permission denied` writing into the mounted directory.** The image runs as
 uid 1000. If your host uid is different, the container cannot write your
-directory — pass your own ids, as every example above does:
+directory. Pass your own ids, as every example above does:
 
 ```bash
 docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/data" ghcr.io/rdk/p2rank ...
 ```
 
 **`Could not download ... ligands/download/XXX.cif`.** BioJava tries to fetch
-chemical component definitions. These messages are harmless — predictions are
-identical with the network disabled — and the image pre-creates a writable
+chemical component definitions. These messages are harmless, since predictions
+are identical with the network disabled, and the image pre-creates a writable
 cache so they should not appear at all. Seeing them means `/tmp` is read-only
 or overmounted.
 
@@ -307,8 +246,8 @@ or overmounted.
 
 ## License and citation
 
-This packaging is MIT licensed, as is P2Rank itself. If you use P2Rank in published work, please cite it — see [`CITATION.cff`](CITATION.cff) and the [upstream citation list](https://github.com/rdk/p2rank/blob/master/misc/citations.md).
+This packaging is MIT licensed, as is P2Rank itself. If you use P2Rank in published work, please cite it. See [`CITATION.cff`](CITATION.cff) and the [upstream citation list](https://github.com/rdk/p2rank/blob/master/misc/citations.md).
 
 > Krivák R, Hoksza D. *P2Rank: machine learning based tool for rapid and accurate prediction of ligand binding sites from protein structure.* Journal of Cheminformatics, 2018. [doi:10.1186/s13321-018-0285-8](https://doi.org/10.1186/s13321-018-0285-8)
 
-For P2Rank itself — algorithm, parameters, the full user guide — see [github.com/rdk/p2rank](https://github.com/rdk/p2rank). A hosted web version is at [prankweb.cz](https://prankweb.cz).
+For P2Rank itself (algorithm, parameters, the full user guide) see [github.com/rdk/p2rank](https://github.com/rdk/p2rank). A hosted web version is at [prankweb.cz](https://prankweb.cz).
