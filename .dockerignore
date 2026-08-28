@@ -1,0 +1,3 @@
+# The build downloads P2Rank from its release URL, so no build context is
+# needed at all. Ship nothing.
+*
