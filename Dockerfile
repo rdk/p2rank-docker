@@ -16,16 +16,15 @@ ARG P2RANK_VERSION
 #   curl -fsSL <release-url> | sha256sum
 ARG P2RANK_SHA256=d243f2d9036ac053fefb9407b5fe1c85f4fe077c519fd975ac585e995feab274
 
-RUN apk add --no-cache curl tar
+# BuildKit verifies the checksum before the layer is created, so a tampered or
+# truncated download fails the build instead of being unpacked. Alpine's busybox
+# tar does the extraction, so this stage installs nothing at all.
+ADD --checksum=sha256:${P2RANK_SHA256} \
+    https://github.com/rdk/p2rank/releases/download/${P2RANK_VERSION}/p2rank_${P2RANK_VERSION}.tar.gz \
+    /tmp/p2rank.tar.gz
 
-RUN set -eux; \
-    curl -fsSL -o /tmp/p2rank.tar.gz \
-      "https://github.com/rdk/p2rank/releases/download/${P2RANK_VERSION}/p2rank_${P2RANK_VERSION}.tar.gz"; \
-    printf '%s  /tmp/p2rank.tar.gz\n' "${P2RANK_SHA256}" > /tmp/p2rank.sha256; \
-    sha256sum -c /tmp/p2rank.sha256; \
-    mkdir -p /opt/p2rank; \
-    tar -xzf /tmp/p2rank.tar.gz -C /opt/p2rank --strip-components=1; \
-    rm -f /tmp/p2rank.tar.gz /tmp/p2rank.sha256
+RUN mkdir -p /opt/p2rank && \
+    tar -xzf /tmp/p2rank.tar.gz -C /opt/p2rank --strip-components=1
 
 # ---------------------------------------------------------------------------
 # Runtime stage. P2Rank needs a JRE 17+ and a bash launcher, and it bundles

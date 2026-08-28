@@ -6,6 +6,8 @@ packaged P2Rank release.
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-08-28
+
 ### Added
 
 - Container image packaging P2Rank 2.5.1 on Eclipse Temurin 25 (LTS), built
@@ -24,3 +26,6 @@ packaged P2Rank release.
 - The heap is `-XX:MaxRAMPercentage=75.0` rather than upstream's fixed
   `-Xmx2048m`, so it follows the container's memory limit and `JAVA_OPTS`
   can override it.
+
+[unreleased]: https://github.com/rdk/p2rank-docker/compare/v2.5.1...HEAD
+[2.5.1]: https://github.com/rdk/p2rank-docker/releases/tag/v2.5.1

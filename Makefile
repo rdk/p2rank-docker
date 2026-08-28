@@ -1,10 +1,11 @@
 IMAGE   ?= p2rank:local
-VERSION ?= 2.5.1
+# The Dockerfile pins the packaged release; derive from it rather than repeating it.
+VERSION := $(shell sed -n 's/^ARG P2RANK_VERSION=//p' Dockerfile)
 
 .PHONY: build test run shell lint clean
 
 build: ## Build the image
-	docker build --build-arg P2RANK_VERSION=$(VERSION) -t $(IMAGE) .
+	docker build -t $(IMAGE) .
 
 test: build ## Build, then run the behavioural test suite
 	IMAGE=$(IMAGE) EXPECTED_VERSION=$(VERSION) tests/run-tests.sh

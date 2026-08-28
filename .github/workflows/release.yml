@@ -4,10 +4,6 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
-    inputs:
-      tag:
-        description: "Image tag to publish (e.g. 2.5.1)"
-        required: true
 
 env:
   REGISTRY: ghcr.io
@@ -15,7 +11,12 @@ env:
   IMAGE_NAME: ${{ github.repository_owner }}/p2rank
 
 jobs:
+  # A tag must not publish an image the behavioural suite has not run against.
+  test:
+    uses: ./.github/workflows/build-test.yml
+
   publish:
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -36,15 +37,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # The Dockerfile pins the packaged P2Rank release, so it also decides the
+      # image tags; the git tag only triggers the build. Upstream versions are
+      # not all valid semver ("2.5", "2.6-alpha"), and type=semver silently
+      # emits nothing for those, so the tags are set literally.
+      - id: ver
+        run: echo "v=$(sed -n 's/^ARG P2RANK_VERSION=//p' Dockerfile)" >> "$GITHUB_OUTPUT"
+
       - id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # latest has exactly one source: the line below. Any prerelease
+          # version (one containing "-") leaves it alone.
+          flavor: latest=false
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=raw,value=${{ steps.ver.outputs.v }}
+            type=raw,value=latest,enable=${{ !contains(steps.ver.outputs.v, '-') }}
 
       - id: build
         uses: docker/build-push-action@v6

@@ -1,6 +1,4 @@
 ignored:
-  # Alpine packages in the throwaway fetch stage need no version pins.
-  - DL3018
   # The runtime base is `FROM ${JAVA_IMAGE}`, whose ARG default is explicitly
   # tagged. hadolint 2.12 (used by hadolint-action) cannot follow that.
   - DL3006

@@ -230,9 +230,16 @@ The image needs no network at runtime — predictions on an air-gapped node are 
 
 | Tag | Means |
 |---|---|
-| `2.5.1` | exact P2Rank release — **use this in pipelines** |
-| `2.5` | latest patch of that minor line |
-| `latest` | latest release, moves without warning |
+| `2.5.1` | the packaged P2Rank release — **use this in pipelines** |
+| `latest` | newest release, moves without warning |
+
+`2.5.1` is rebuilt when the base image picks up security updates, so it moves
+too — it always means P2Rank 2.5.1, not one exact build. Pin the digest where a
+run has to be byte-identical:
+
+```bash
+docker run ghcr.io/rdk/p2rank@sha256:<digest> ...
+```
 
 ## Building it yourself
 

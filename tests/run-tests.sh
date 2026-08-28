@@ -10,7 +10,9 @@
 set -uo pipefail
 
 IMAGE="${IMAGE:-p2rank:local}"
-EXPECTED_VERSION="${EXPECTED_VERSION:-2.5.1}"
+here="$(cd "$(dirname "$0")" && pwd)"
+# The Dockerfile is the single source of truth for the packaged version.
+EXPECTED_VERSION="${EXPECTED_VERSION:-$(sed -n 's/^ARG P2RANK_VERSION=//p' "$here/../Dockerfile")}"
 MIN_JAVA="${MIN_JAVA:-17}"
 
 pass=0
