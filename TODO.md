@@ -79,13 +79,14 @@ Evidence:
 
 ## P3 — housekeeping
 
-- [ ] **Rebase the six open dependabot PRs (#1, #2, #3, #5, #6, #7).** Two show
-      red CI — `actions/checkout` 4→7 and `setup-buildx` 3→4 — but the failures
-      are not incompatibilities: both fail in the `scan` job on the bundled
-      jackson-core CVE, having run at 12:14 on 2026-08-27, four minutes before
-      the `.trivyignore.yaml` format fix (a6d4031) landed at 12:18. The
-      metadata-action PR that ran after the fix passed. Rebasing should turn
-      them green.
+- [x] **Rebase the six open dependabot PRs.** Done. #5 (hadolint) auto-closed
+      when 96f626a bumped the action; #6, #1, #3 and #2 rebased and merged, so
+      the repo is on checkout v7, alpine 3.24, setup-buildx v4 and
+      build-push-action v7. The red CI was not incompatibility, as suspected,
+      but a stale base: they predated the hadolint fix. #7 was superseded by
+      #8, a single grouped PR now that `dependabot.yml` groups action bumps.
+      #8 is deliberately left open until after the first release: all four of
+      its bumps land in `release.yml`, which no CI run exercises.
 
 ## Nextflow module nits
 
