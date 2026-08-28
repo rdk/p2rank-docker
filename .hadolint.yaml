@@ -1,4 +1,0 @@
-ignored:
-  # The runtime base is `FROM ${JAVA_IMAGE}`, whose ARG default is explicitly
-  # tagged. hadolint 2.12 (used by hadolint-action) cannot follow that.
-  - DL3006

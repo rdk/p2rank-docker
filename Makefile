@@ -18,7 +18,7 @@ shell: ## Interactive shell in the image
 	docker run --rm -it -v "$$PWD:/data" $(IMAGE) bash
 
 lint: ## Lint the Dockerfile and the test script
-	docker run --rm -i -v "$$PWD/.hadolint.yaml:/.hadolint.yaml" hadolint/hadolint < Dockerfile
+	docker run --rm -i hadolint/hadolint < Dockerfile
 	docker run --rm -v "$$PWD:/mnt" koalaman/shellcheck:stable /mnt/tests/run-tests.sh
 
 clean: ## Remove the local image

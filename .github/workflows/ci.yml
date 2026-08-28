@@ -15,11 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # v3.1.0 bundles hadolint 2.12, which cannot parse `ADD --checksum`.
+      # v3.5.0 bundles 2.15.1, which also no longer needs the DL3006
+      # exception the config file used to carry.
       - name: Lint Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@v3.5.0
         with:
           dockerfile: Dockerfile
-          config: .hadolint.yaml
       - name: Lint shell scripts
         run: shellcheck tests/run-tests.sh
 
