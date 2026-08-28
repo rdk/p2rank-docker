@@ -4,6 +4,11 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build everything, publish nothing"
+        type: boolean
+        default: false
 
 env:
   REGISTRY: ghcr.io
@@ -60,13 +65,17 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          push: true
+          # A dry run exercises the whole path — the version step, the tag
+          # computation, the emulated arm64 build and its in-image smoke
+          # prediction — without publishing anything irreversible.
+          push: ${{ !inputs.dry_run }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           sbom: true
           provenance: mode=max
 
       - name: Attest provenance
+        if: ${{ !inputs.dry_run }}
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
