@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       # linux/amd64 only: `load: true` cannot load a multi-platform image into
       # the daemon, and the tests drive a running container. arm64 is still
