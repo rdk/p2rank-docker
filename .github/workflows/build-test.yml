@@ -22,7 +22,7 @@ jobs:
       # the daemon, and the tests drive a running container. arm64 is still
       # covered by the in-Dockerfile smoke prediction at release time.
       - name: Build image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           load: true
