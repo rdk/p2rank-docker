@@ -12,6 +12,9 @@ packaged P2Rank release.
   from a checksum-verified release tarball in a two-stage build.
 - Behavioural test suite covering prediction correctness, arbitrary `--user`,
   bind-mount ownership, offline operation and heap sizing.
+- Nextflow module (`modules/p2rank/main.nf`) predicting in batches through a
+  dataset file and merging the per-structure CSVs into one table, with a
+  worked configuration in the README.
 - CI: Dockerfile and shell linting, build and test on every push plus weekly,
   vulnerability scanning, multi-architecture publishing with SBOM and build
   provenance, and a scheduled check for new upstream P2Rank releases.

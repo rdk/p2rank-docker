@@ -77,7 +77,8 @@ docker run --rm -e JAVA_OPTS="-Xmx8g" ...
 
 ### Nextflow
 
-The image carries no `ENTRYPOINT`, so it drops into a Nextflow pipeline unchanged:
+The image carries no `ENTRYPOINT`, so it drops into a pipeline unchanged. The
+minimal case is one structure per task:
 
 ```groovy
 process predict_pockets {
@@ -92,6 +93,129 @@ process predict_pockets {
     """
 }
 ```
+
+#### A batching module
+
+One task per structure pays the JVM startup cost every time. Because `prank`
+takes a dataset file, a batch of structures can share a single JVM — collate the
+channel, write the paths to a `.ds`, and let P2Rank thread across them. The
+module below predicts in batches and merges the per-structure CSVs into one
+table with a `structure` column. It ships in this repo as
+[`modules/p2rank/main.nf`](modules/p2rank/main.nf) — copy it, or include it
+directly:
+
+```groovy
+// modules/p2rank/main.nf
+
+process RUN_P2RANK {
+
+    label 'p2rank'
+    errorStrategy 'ignore'
+
+    input:
+    path structures
+
+    output:
+    path "out/*_predictions.csv", emit: predictions
+    path "out/*_residues.csv",    emit: residues
+
+    script:
+    """
+    printf '%s\\n' ${structures} > batch.ds
+
+    prank predict batch.ds \\
+        -o out \\
+        -c ${params.p2rank_config} \\
+        -threads ${task.cpus}
+    """
+}
+
+process MERGE_P2RANK {
+
+    label 'p2rank'
+    publishDir params.outdir, mode: 'copy', overwrite: true
+
+    input:
+    path csvs
+
+    output:
+    path 'pockets.csv'
+
+    script:
+    """
+    # The image ships a JRE, not Python: keep the merge to awk.
+    awk 'FNR==1 {
+             structure = FILENAME
+             sub(/_predictions\\.csv\$/, "", structure)
+             if (!header++) { print "structure," \$0 }
+             next
+         }
+         NF { print structure "," \$0 }' *_predictions.csv \\
+      | sed 's/ *, */,/g' > pockets.csv
+    """
+}
+
+workflow P2RANK {
+    take:
+    structure_ch // expects: path(mmCIF/PDB file)
+
+    main:
+    RUN_P2RANK(structure_ch.collate(params.p2rank_batch_size.toInteger()))
+    MERGE_P2RANK(RUN_P2RANK.out.predictions.collect())
+
+    emit:
+    MERGE_P2RANK.out
+}
+```
+
+With the matching configuration:
+
+```groovy
+// nextflow.config
+
+params {
+    p2rank_config     = 'default'  // 'alphafold' for predicted structures
+    p2rank_batch_size = 100        // structures per call; caps the blast
+                                   // radius of one bad structure
+}
+
+process {
+    withLabel: p2rank {
+        container = 'ghcr.io/rdk/p2rank:2.5.1'
+        cpus      = 4
+        memory    = '8.GB'
+    }
+}
+
+docker.enabled = true
+```
+
+Called as `P2RANK(structure_ch)`, it writes one `pockets.csv` for the run:
+
+```groovy
+include { P2RANK } from './modules/p2rank/main.nf'
+
+workflow {
+    P2RANK(Channel.fromPath(params.list).map { file(it) })
+}
+```
+
+A few things worth knowing when wiring this up:
+
+- **`task.cpus` and `task.memory` both do what you would expect.** `-threads`
+  takes the former; the heap follows the container limit Nextflow sets from the
+  latter, so no `JAVA_OPTS` is needed.
+- **No model volume, no network.** The trained models are inside the image, so
+  unlike tools that pull weights at runtime this needs no `containerOptions` and
+  runs on air-gapped nodes.
+- **The image has a JRE, not Python.** Post-processing inside these tasks has to
+  be shell, awk or Java — or run in another container.
+- **Batch size bounds the damage.** A structure P2Rank rejects fails its whole
+  batch, so smaller batches lose less work; `errorStrategy 'ignore'` keeps one
+  bad batch from killing the run.
+- **Pick the model per input.** Predicted structures want `-c alphafold`, which
+  reads pLDDT from the B-factor column — split the channel by provenance if a
+  run mixes experimental and predicted structures.
 
 ### Singularity / Apptainer on HPC
 
