@@ -27,30 +27,3 @@ jobs:
 
   test:
     uses: ./.github/workflows/build-test.yml
-
-  scan:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
-      - name: Build image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          load: true
-          tags: p2rank:scan
-          cache-from: type=gha
-      # Fails only on fixable HIGH/CRITICAL findings, minus the ones recorded
-      # in .trivyignore that live inside the upstream P2Rank bundle. So a red
-      # build always means something new and actionable appeared.
-      - name: Scan for vulnerabilities
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: p2rank:scan
-          format: table
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          trivyignores: .trivyignore.yaml
-          exit-code: "1"

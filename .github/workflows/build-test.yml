@@ -34,3 +34,17 @@ jobs:
         run: tests/run-tests.sh
         env:
           IMAGE: p2rank:local
+
+      # Scans the image the tests just ran against, rather than building a
+      # second copy. Fails only on fixable HIGH/CRITICAL findings, minus the
+      # ones recorded in .trivyignore.yaml that live inside the upstream
+      # P2Rank bundle, so a red build always means something new.
+      - name: Scan for vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: p2rank:local
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          trivyignores: .trivyignore.yaml
+          exit-code: "1"

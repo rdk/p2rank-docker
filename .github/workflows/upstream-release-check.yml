@@ -18,7 +18,7 @@ jobs:
 
       - id: versions
         run: |
-          pinned=$(grep -oP '^ARG P2RANK_VERSION=\K.*' Dockerfile)
+          pinned=$(sed -n 's/^ARG P2RANK_VERSION=//p' Dockerfile)
           latest=$(gh api /repos/rdk/p2rank/releases/latest --jq .tag_name)
           echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
@@ -47,6 +47,7 @@ jobs:
           ARG P2RANK_SHA256=$sha
           \`\`\`
 
-          Then bump \`EXPECTED_VERSION\` in CI if it is pinned, and tag a release.
+          The Makefile, the test suite and the release tags all read that ARG,
+          so nothing else needs changing. Then tag a release.
           EOF
           )"
