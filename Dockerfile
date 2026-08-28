@@ -9,7 +9,7 @@ ARG JAVA_IMAGE=eclipse-temurin:25-jre-noble
 # ---------------------------------------------------------------------------
 # Fetch stage. Keeps curl and the 275 MB tarball out of the runtime image.
 # ---------------------------------------------------------------------------
-FROM alpine:3.21 AS fetch
+FROM alpine:3.24 AS fetch
 
 ARG P2RANK_VERSION
 # Checksum of p2rank_${P2RANK_VERSION}.tar.gz. Update it with the version:
