@@ -45,7 +45,7 @@ jobs:
         run: echo "v=$(sed -n 's/^ARG P2RANK_VERSION=//p' Dockerfile)" >> "$GITHUB_OUTPUT"
 
       - id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           # latest has exactly one source: the line below. Any prerelease
