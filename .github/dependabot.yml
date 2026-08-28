@@ -8,3 +8,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # One PR per week for all action bumps rather than one per action. Five
+    # separate PRs each needed their own rebase and CI run last time, and a
+    # single grouped PR is also cheaper to review.
+    groups:
+      actions:
+        patterns: ["*"]
