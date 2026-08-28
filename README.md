@@ -1,8 +1,10 @@
 # P2Rank in Docker
 
-Ready-to-run container image for [**P2Rank**](https://github.com/rdk/p2rank): machine learning based prediction of ligand binding sites from protein structure.
+Container image for [P2Rank](https://github.com/rdk/p2rank), machine learning
+based prediction of ligand binding sites from protein structure.
 
-No Java to install, no classpath to configure, no model files to download. One command, and you get pockets.
+The JRE and the trained models are part of the image, so Docker is the only
+requirement on the host.
 
 ```bash
 docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/data" ghcr.io/rdk/p2rank \
