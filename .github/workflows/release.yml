@@ -24,7 +24,7 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # linux/arm64 is built under emulation. Drop it from `platforms` below if
       # the emulated smoke test ever becomes too slow.
